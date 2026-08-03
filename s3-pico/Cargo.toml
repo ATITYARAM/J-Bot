@@ -9,12 +9,11 @@ name = "s3-pico"
 path = "./src/main.rs"
 
 [dependencies]
-esp-hal = { version = "0.23", features = ["esp32s3", "unstable"] }
-esp-backtrace = { version = "0.14", features = ["esp32s3", "panic-handler", "exception-handler", "println"] }
-esp-println = { version = "0.12", default-features = false, features = ["esp32s3", "uart"] }
+esp-hal = { version = "1.1.1", features = ["esp32s3", "unstable"] }
+esp-backtrace = { version = "0.19", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.17", default-features = false, features = ["esp32s3", "uart"] }
 
 embedded-hal = "1.0"
-
 fugit = "0.3"
 
 # For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html

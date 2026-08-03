@@ -1,91 +1,201 @@
 #![no_std]
 #![no_main]
 
-use embedded_hal::delay::DelayNs;
-
 use esp_backtrace as _;
 use esp_hal::{
     clock::CpuClock,
-    delay::Delay,
-    gpio::{Level, Output},
-    ledc::{
-        self,
-        channel::{ChannelHW, ChannelIFace},
-        timer::{self, TimerIFace},
-        Ledc,
-        LSGlobalClkSource,
-        LowSpeed,
+    gpio::{Level, Output, OutputConfig},
+    mcpwm::{
+        operator::PwmPinConfig,
+        timer::PwmWorkingMode,
+        McPwm,
+        PeripheralClockConfig,
     },
+    time::Rate,
+    usb_serial_jtag::UsbSerialJtag,
 };
-
-use fugit::RateExtU32;
 use esp_println::println;
 
 #[esp_hal::main]
 fn main() -> ! {
-    // ---------------------------------
-    // ESP Initialization
-    // ---------------------------------
+    //----------------------------------------------------
+    // ESP
+    //----------------------------------------------------
 
-    let peripherals = esp_hal::init({
-        let mut config = esp_hal::Config::default();
-        config.cpu_clock = CpuClock::max();
-        config
-    });
+    let config =
+        esp_hal::Config::default()
+            .with_cpu_clock(CpuClock::max());
 
-    let mut delay = Delay::new();
+    let peripherals = esp_hal::init(config);
 
-    println!("J-BOT Motor Test");
+    println!("J-BOT MCPWM Driver");
 
-    // ---------------------------------
-    // Direction Pin
-    // GPIO5
-    // ---------------------------------
+    //----------------------------------------------------
+    // USB
+    //----------------------------------------------------
 
-    let mut dir = Output::new(peripherals.GPIO5, Level::Low);
+    let mut usb =
+        UsbSerialJtag::new(peripherals.USB_DEVICE);
 
-    // Forward
+    //----------------------------------------------------
+    // Direction Pins
+    //----------------------------------------------------
 
-    dir.set_low();
+    let mut left_dir =
+        Output::new(
+            peripherals.GPIO5,
+            Level::High,
+            OutputConfig::default(),
+        );
 
-    // ---------------------------------
-    // LEDC PWM
-    // GPIO4
-    // ---------------------------------
+    let mut right_dir =
+        Output::new(
+            peripherals.GPIO7,
+            Level::High,
+            OutputConfig::default(),
+        );
 
-    let mut ledc = Ledc::new(peripherals.LEDC);
+    //----------------------------------------------------
+    // MCPWM
+    //----------------------------------------------------
 
-    ledc.set_global_slow_clock(LSGlobalClkSource::APBClk);
-
-    let mut timer = ledc.timer::<LowSpeed>(timer::Number::Timer0);
-
-    timer
-        .configure(timer::config::Config {
-            duty: timer::config::Duty::Duty12Bit,
-            clock_source: timer::LSClockSource::APBClk,
-            frequency: 5.kHz(),
-        })
+    let clock =
+        PeripheralClockConfig::with_frequency(
+            Rate::from_mhz(40),
+        )
         .unwrap();
 
-    let mut pwm =
-        ledc.channel(ledc::channel::Number::Channel0, peripherals.GPIO4);
+    let mut mcpwm =
+        McPwm::new(
+            peripherals.MCPWM0,
+            clock,
+        );
 
-    pwm.configure(ledc::channel::config::Config {
-        timer: &timer,
-        duty_pct: 0,
-        pin_config: ledc::channel::config::PinConfig::PushPull,
-    })
-    .unwrap();
+    //----------------------------------------------------
+    // LEFT PWM
+    //----------------------------------------------------
 
-    // ---------------------------------
-    // 50% Duty
-    // ---------------------------------
+    mcpwm.operator0.set_timer(&mcpwm.timer0);
 
-    pwm.set_duty_hw(2048);
+    let mut left_pwm =
+        mcpwm.operator0.with_pin_a(
+            peripherals.GPIO4,
+            PwmPinConfig::UP_ACTIVE_HIGH,
+        );
 
-    println!("Motor Running...");
+    //----------------------------------------------------
+    // RIGHT PWM
+    //----------------------------------------------------
+
+    mcpwm.operator1.set_timer(&mcpwm.timer1);
+
+    let mut right_pwm =
+        mcpwm.operator1.with_pin_a(
+            peripherals.GPIO6,
+            PwmPinConfig::UP_ACTIVE_HIGH,
+        );
+
+    //----------------------------------------------------
+    // Timers
+    //----------------------------------------------------
+
+    let timer =
+        clock
+            .timer_clock_with_frequency(
+                99,
+                PwmWorkingMode::Increase,
+                Rate::from_khz(20),
+            )
+            .unwrap();
+
+    mcpwm.timer0.start(timer);
+
+    mcpwm.timer1.start(timer);
+
+    //----------------------------------------------------
+    // Serial Buffer
+    //----------------------------------------------------
+
+    let mut buffer = [0u8; 64];
+    let mut index = 0usize;
 
     loop {
-        delay.delay_ms(1000);
+        if let Ok(byte) = usb.read_byte() {
+            if byte == b'\n' {
+                if let Ok(packet) =
+                    core::str::from_utf8(&buffer[..index])
+                {
+                    println!("RX -> {}", packet);
+
+                    if let Some((left, right)) = parse(packet) {
+
+                        // -------------------------
+                        // LEFT MOTOR
+                        // -------------------------
+
+                        let left_speed = left.clamp(-255, 255);
+
+                        if left_speed >= 0 {
+                            left_dir.set_high();
+                        } else {
+                            left_dir.set_low();
+                        }
+
+                        let left_duty =
+                            ((left_speed.abs() as u16 * 99) / 255) as u16;
+
+                        left_pwm.set_timestamp(left_duty);
+
+                        // -------------------------
+                        // RIGHT MOTOR
+                        // -------------------------
+
+                        let right_speed = right.clamp(-255, 255);
+
+                        if right_speed >= 0 {
+                            right_dir.set_high();
+                        } else {
+                            right_dir.set_low();
+                        }
+
+                        let right_duty =
+                            ((right_speed.abs() as u16 * 99) / 255) as u16;
+
+                        right_pwm.set_timestamp(right_duty);
+                    }
+                }
+
+                index = 0;
+            } else {
+                if index < buffer.len() {
+                    buffer[index] = byte;
+                    index += 1;
+                }
+            }
+        }
+    }
+}
+
+fn parse(packet: &str) -> Option<(i16, i16)> {
+    let mut left = None;
+    let mut right = None;
+
+    for part in packet.split_whitespace() {
+        if let Some(v) =
+            part.strip_prefix("L:")
+        {
+            left = v.parse::<i16>().ok();
+        }
+
+        if let Some(v) =
+            part.strip_prefix("R:")
+        {
+            right = v.parse::<i16>().ok();
+        }
+    }
+
+    match (left, right) {
+        (Some(l), Some(r)) => Some((l, r)),
+        _ => None,
     }
 }
