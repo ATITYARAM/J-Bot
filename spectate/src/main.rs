@@ -3,6 +3,8 @@ mod fix;
 mod api;
 mod models;
 mod scan;
+mod api_process;
+mod process;
 
 use std::{env, net::SocketAddr};
 
@@ -66,7 +68,8 @@ async fn start_server() {
 
     let app = Router::new()
         .merge(api::router())
-        .fallback_service(
+	.merge(api_process::router())
+	.fallback_service(
             ServeDir::new("static")
                 .append_index_html_on_directories(true),
         );

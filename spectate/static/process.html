@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>J-BOT Spectate • Process Manager</title>
+
+    <link rel="stylesheet"
+          href="process.css?v=1">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+
+    <header class="hero">
+
+        <div>
+
+            <h1>J-BOT</h1>
+
+            <p class="subtitle">
+                ROS2 Process Manager
+            </p>
+
+        </div>
+
+        <div>
+
+            <a href="index.html"
+               class="back-button">
+
+                ← Dashboard
+
+            </a>
+
+        </div>
+
+    </header>
+
+    <!-- ===================================================== -->
+    <!-- WORKSPACE -->
+    <!-- ===================================================== -->
+
+    <section class="workspace">
+
+        <div class="title">
+            Workspace
+        </div>
+
+        <code>
+            /home/atitya/Documents/J-Bot/ros_ws
+        </code>
+
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- TELEOP -->
+    <!-- ===================================================== -->
+
+    <section class="process-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>Teleop</h2>
+
+                <p>
+                    ros2 run teleop viaduct
+                </p>
+
+            </div>
+
+            <div class="controls">
+
+                <span id="teleop-status"
+                      class="status stopped">
+                    STOPPED
+                </span>
+
+                <button id="teleop-start">
+                    ▶ Start
+                </button>
+
+                <button id="teleop-stop">
+                    ■ Stop
+                </button>
+
+                <button id="teleop-clear">
+                    Clear
+                </button>
+
+            </div>
+
+        </div>
+
+        <pre id="teleop-output"
+             class="terminal"></pre>
+
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- BUILD -->
+    <!-- ===================================================== -->
+
+    <section class="process-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>Build Workspace</h2>
+
+                <p>
+                    colcon build
+                </p>
+
+            </div>
+
+            <div class="controls">
+
+                <span id="build-status"
+                      class="status stopped">
+                    STOPPED
+                </span>
+
+                <button id="build-start">
+                    ▶ Start
+                </button>
+
+                <button id="build-stop">
+                    ■ Stop
+                </button>
+
+                <button id="build-clear">
+                    Clear
+                </button>
+
+            </div>
+
+        </div>
+
+        <pre id="build-output"
+             class="terminal"></pre>
+
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- S3 -->
+    <!-- ===================================================== -->
+
+    <section class="process-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>S3 Node</h2>
+
+                <p>
+                    source install/setup.bash &&
+                    ros2 run s3 viaduct
+                </p>
+
+            </div>
+
+            <div class="controls">
+
+                <span id="s3-status"
+                      class="status stopped">
+                    STOPPED
+                </span>
+
+                <button id="s3-start">
+                    ▶ Start
+                </button>
+
+                <button id="s3-stop">
+                    ■ Stop
+                </button>
+
+                <button id="s3-clear">
+                    Clear
+                </button>
+
+            </div>
+
+        </div>
+
+        <pre id="s3-output"
+             class="terminal"></pre>
+
+    </section>
+
+</div>
+
+<script src="process.js?v=1"></script>
+
+</body>
+</html>

@@ -1,0 +1,435 @@
+/* ==========================================================
+   RESET
+========================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+:root{
+
+    --bg:#0d1117;
+
+    --panel:#161b22;
+    --panel2:#10151c;
+
+    --border:#30363d;
+
+    --green:#44ff88;
+    --blue:#58a6ff;
+    --red:#ff7b72;
+
+    --text:#e6edf3;
+    --muted:#8b949e;
+
+}
+
+/* ==========================================================
+   BODY
+========================================================== */
+
+body{
+
+    background:#0d1117;
+
+    color:var(--text);
+
+    font-family:
+        "JetBrains Mono",
+        "Fira Code",
+        monospace;
+
+    line-height:1.5;
+
+    background-image:
+
+        linear-gradient(
+            rgba(255,255,255,.03) 1px,
+            transparent 1px
+        ),
+
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.03) 1px,
+            transparent 1px
+        );
+
+    background-size:32px 32px;
+
+}
+
+/* ==========================================================
+   CONTAINER
+========================================================== */
+
+.container{
+
+    width:min(1700px,96%);
+
+    margin:30px auto;
+
+}
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.hero{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:var(--panel);
+
+    border:1px solid var(--border);
+
+    padding:20px 24px;
+
+    margin-bottom:25px;
+
+    box-shadow:8px 8px 0 rgba(0,0,0,.45);
+
+}
+
+.hero h1{
+
+    color:var(--green);
+
+    font-size:42px;
+
+    letter-spacing:3px;
+
+}
+
+.subtitle{
+
+    color:var(--blue);
+
+    margin-top:6px;
+
+    font-size:15px;
+
+}
+
+.back-button{
+
+    text-decoration:none;
+
+    color:var(--blue);
+
+    border:1px solid var(--border);
+
+    padding:8px 18px;
+
+    transition:.15s;
+
+}
+
+.back-button:hover{
+
+    border-color:var(--blue);
+
+    background:#1b2430;
+
+}
+
+/* ==========================================================
+   WORKSPACE
+========================================================== */
+
+.workspace{
+
+    background:var(--panel);
+
+    border:1px solid var(--border);
+
+    padding:18px;
+
+    margin-bottom:24px;
+
+    box-shadow:6px 6px 0 rgba(0,0,0,.45);
+
+}
+
+.title{
+
+    color:var(--blue);
+
+    text-transform:uppercase;
+
+    letter-spacing:2px;
+
+    font-size:12px;
+
+    margin-bottom:10px;
+
+}
+
+.workspace code{
+
+    display:block;
+
+    background:#0b0f14;
+
+    border-left:3px solid var(--blue);
+
+    padding:10px;
+
+    color:#d2d7dc;
+
+    font-size:12px;
+
+}
+
+/* ==========================================================
+   PROCESS CARD
+========================================================== */
+
+.process-card{
+
+    background:var(--panel);
+
+    border:1px solid var(--border);
+
+    margin-bottom:24px;
+
+    box-shadow:8px 8px 0 rgba(0,0,0,.45);
+
+    transition:.15s;
+
+}
+
+.process-card:hover{
+
+    border-color:var(--blue);
+
+    transform:translateY(-2px);
+
+}
+
+.card-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    padding:18px;
+
+    border-bottom:1px solid var(--border);
+
+}
+
+.card-header h2{
+
+    color:var(--green);
+
+    margin-bottom:6px;
+
+}
+
+.card-header p{
+
+    color:var(--muted);
+
+    font-size:12px;
+
+    word-break:break-word;
+
+}
+
+/* ==========================================================
+   CONTROLS
+========================================================== */
+
+.controls{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+}
+
+button{
+
+    background:#111821;
+
+    color:var(--blue);
+
+    border:1px solid var(--border);
+
+    padding:7px 14px;
+
+    cursor:pointer;
+
+    font-family:inherit;
+
+    transition:.15s;
+
+}
+
+button:hover{
+
+    background:#1d2530;
+
+    border-color:var(--blue);
+
+    color:white;
+
+}
+
+/* ==========================================================
+   STATUS
+========================================================== */
+
+.status{
+
+    padding:4px 10px;
+
+    border:1px solid;
+
+    font-size:11px;
+
+    letter-spacing:2px;
+
+    font-weight:bold;
+
+}
+
+.running{
+
+    color:var(--green);
+
+    border-color:var(--green);
+
+}
+
+.stopped{
+
+    color:var(--red);
+
+    border-color:var(--red);
+
+}
+
+/* ==========================================================
+   TERMINAL
+========================================================== */
+
+.terminal{
+
+    background:#050608;
+
+    color:#d8dee9;
+
+    min-height:260px;
+
+    max-height:260px;
+
+    overflow:auto;
+
+    padding:18px;
+
+    font-size:13px;
+
+    line-height:1.55;
+
+    white-space:pre-wrap;
+
+    word-break:break-word;
+
+}
+
+/* ==========================================================
+   TERMINAL SCROLLBAR
+========================================================== */
+
+.terminal::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+.terminal::-webkit-scrollbar-track{
+
+    background:#0b0f14;
+
+}
+
+.terminal::-webkit-scrollbar-thumb{
+
+    background:#30363d;
+
+}
+
+.terminal::-webkit-scrollbar-thumb:hover{
+
+    background:#58a6ff;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width:900px){
+
+    .hero{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:18px;
+
+    }
+
+    .card-header{
+
+        flex-direction:column;
+
+        gap:16px;
+
+    }
+
+    .controls{
+
+        width:100%;
+
+    }
+
+}
+
+@media (max-width:600px){
+
+    .container{
+
+        width:97%;
+
+    }
+
+    .hero h1{
+
+        font-size:30px;
+
+    }
+
+    .terminal{
+
+        min-height:220px;
+
+        max-height:220px;
+
+    }
+
+}
