@@ -1,0 +1,848 @@
+/* ==========================================================
+   RESET
+========================================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+:root{
+
+    --bg:#0d1117;
+    --panel:#161b22;
+    --panel-light:#1d232c;
+
+    --border:#30363d;
+    --border-hover:#58a6ff;
+
+    --green:#44ff88;
+    --blue:#58a6ff;
+    --text:#e6edf3;
+    --muted:#8b949e;
+
+    --shadow:0 8px 24px rgba(0,0,0,.45);
+
+}
+
+/* ==========================================================
+   BODY
+========================================================== */
+
+html{
+
+    scroll-behavior:smooth;
+
+}
+
+body{
+
+    background:var(--bg);
+
+    color:var(--text);
+
+    font-family:
+        "JetBrains Mono",
+        "Fira Code",
+        monospace;
+
+    font-size:14px;
+
+    line-height:1.6;
+
+    overflow-x:hidden;
+
+}
+
+/* Terminal grid */
+
+body::before{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.06;
+
+    background-image:
+
+        linear-gradient(rgba(88,166,255,.12) 1px, transparent 1px),
+
+        linear-gradient(90deg, rgba(88,166,255,.12) 1px, transparent 1px);
+
+    background-size:32px 32px;
+
+    z-index:-2;
+
+}
+
+/* Scanlines */
+
+body::after{
+
+    content:"";
+
+    position:fixed;
+
+    inset:0;
+
+    pointer-events:none;
+
+    background:
+
+        repeating-linear-gradient(
+
+            0deg,
+
+            rgba(255,255,255,.015) 0,
+
+            rgba(255,255,255,.015) 1px,
+
+            transparent 2px,
+
+            transparent 4px
+
+        );
+
+    opacity:.25;
+
+    z-index:-1;
+
+}
+
+/* ==========================================================
+   LAYOUT
+========================================================== */
+
+.container{
+
+    width:min(1500px,95%);
+
+    margin:28px auto 70px;
+
+}
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.hero{
+
+    background:var(--panel);
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow);
+
+    padding:22px 28px;
+
+    margin-bottom:34px;
+
+}
+
+.brand-row{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-bottom:12px;
+
+}
+
+.brand-row h1{
+
+    font-size:42px;
+
+    color:var(--green);
+
+    letter-spacing:4px;
+
+    font-weight:700;
+
+}
+
+.hero-badge{
+
+    color:var(--green);
+
+    border:1px solid var(--green);
+
+    padding:5px 14px;
+
+    font-size:11px;
+
+    font-weight:bold;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+}
+
+.hero-title{
+
+    color:var(--blue);
+
+    font-size:17px;
+
+    margin-bottom:14px;
+
+    letter-spacing:1px;
+
+}
+
+.intro{
+
+    max-width:980px;
+
+    color:var(--muted);
+
+    line-height:1.8;
+
+}
+
+.highlight{
+
+    color:var(--green);
+
+    font-weight:bold;
+
+}
+
+.dashboard-section{
+
+    margin-top:34px;
+
+}
+
+.section-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:16px;
+
+    margin-bottom:18px;
+
+}
+
+.section-header h2{
+
+    color:var(--blue);
+
+    text-transform:uppercase;
+
+    letter-spacing:3px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+
+.section-line{
+
+    flex:1;
+
+    height:1px;
+
+    background:var(--border);
+
+}
+
+/* ==========================================================
+   SECTION HEADER
+========================================================== */
+
+.dashboard-section{
+
+    margin-top:36px;
+
+}
+
+.section-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    margin-bottom:20px;
+
+}
+
+.section-header h2{
+
+    color:var(--blue);
+
+    text-transform:uppercase;
+
+    letter-spacing:3px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+}
+
+.section-line{
+
+    flex:1;
+
+    height:1px;
+
+    background:var(--border);
+
+}
+
+/* ==========================================================
+   BUTTON
+========================================================== */
+
+button{
+
+    background:var(--panel);
+
+    color:var(--blue);
+
+    border:1px solid var(--border);
+
+    padding:8px 18px;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    text-transform:uppercase;
+
+    letter-spacing:2px;
+
+    cursor:pointer;
+
+    transition:.18s;
+
+}
+
+button:hover{
+
+    border-color:var(--border-hover);
+
+    color:#fff;
+
+    background:#1d2530;
+
+    box-shadow:
+        0 0 16px rgba(88,166,255,.18);
+
+}
+
+/* ==========================================================
+   INFO PANELS
+========================================================== */
+
+.info-panel{
+
+    background:var(--panel);
+
+    border:1px solid var(--border);
+
+    min-height:70px;
+
+    padding:18px;
+
+    box-shadow:var(--shadow);
+
+}
+
+/* ==========================================================
+   TOOLS GRID
+========================================================== */
+
+#tools-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(auto-fill,minmax(340px,1fr));
+
+    gap:20px;
+
+    align-items:start;
+
+}
+
+/* ==========================================================
+   TOOL CARD
+========================================================== */
+
+.tool-card{
+
+    background:linear-gradient(
+        180deg,
+        var(--panel-light),
+        var(--panel)
+    );
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow);
+
+    padding:16px;
+
+    transition:
+        transform .15s,
+        border-color .15s,
+        box-shadow .15s;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.tool-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+
+    top:0;
+
+    width:4px;
+
+    height:100%;
+
+    background:var(--green);
+
+    opacity:.85;
+
+}
+
+.tool-card:hover{
+
+    transform:translateY(-4px);
+
+    border-color:var(--border-hover);
+
+    box-shadow:
+
+        0 0 22px rgba(88,166,255,.15),
+
+        var(--shadow);
+
+}
+
+/* ==========================================================
+   CARD HEADER
+========================================================== */
+
+.card-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    border-bottom:1px solid var(--border);
+
+    padding-bottom:12px;
+
+    margin-bottom:14px;
+
+}
+
+.card-header h3{
+
+    color:var(--green);
+
+    font-size:19px;
+
+    margin-bottom:4px;
+
+    font-weight:700;
+
+}
+
+.group{
+
+    color:var(--muted);
+
+    text-transform:uppercase;
+
+    letter-spacing:2px;
+
+    font-size:10px;
+
+}
+
+/* ==========================================================
+   STATUS BADGE
+========================================================== */
+
+.status-ok,
+.status-bad{
+
+    padding:4px 10px;
+
+    font-size:10px;
+
+    letter-spacing:2px;
+
+    font-weight:bold;
+
+    text-transform:uppercase;
+
+    border:1px solid;
+
+}
+
+.status-ok{
+
+    color:var(--green);
+
+    border-color:var(--green);
+
+}
+
+.status-bad{
+
+    color:#ff7b72;
+
+    border-color:#ff7b72;
+
+}
+
+
+/* ==========================================================
+   CARD BODY
+========================================================== */
+
+.card-body{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:16px;
+
+}
+
+.meta{
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+.meta-label{
+
+    color:var(--blue);
+
+    text-transform:uppercase;
+
+    letter-spacing:2px;
+
+    font-size:10px;
+
+    margin-bottom:6px;
+
+    font-weight:700;
+
+}
+
+/* ==========================================================
+   CODE BLOCKS
+========================================================== */
+
+code{
+
+    display:block;
+
+    background:#0b0f14;
+
+    border:1px solid #21262d;
+
+    border-left:3px solid var(--blue);
+
+    padding:10px 12px;
+
+    color:#d2d7dc;
+
+    font-size:11px;
+
+    line-height:1.5;
+
+    overflow-wrap:anywhere;
+
+    white-space:pre-wrap;
+
+    position:relative;
+
+}
+
+code::before{
+
+    content:">";
+
+    color:var(--green);
+
+    font-weight:bold;
+
+    margin-right:8px;
+
+}
+
+/* ==========================================================
+   CARD FOOTER
+========================================================== */
+
+.card-footer{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-top:18px;
+
+    padding-top:12px;
+
+    border-top:1px solid var(--border);
+
+    color:var(--muted);
+
+    font-size:11px;
+
+    letter-spacing:1px;
+
+}
+
+.footer-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+/* ==========================================================
+   STATUS DOTS
+========================================================== */
+
+.dot{
+
+    width:8px;
+
+    height:8px;
+
+    display:inline-block;
+
+    border-radius:50%;
+
+}
+
+.dot-green{
+
+    background:var(--green);
+
+    box-shadow:0 0 8px rgba(68,255,136,.6);
+
+    animation:pulse 2s infinite;
+
+}
+
+.dot-red{
+
+    background:#ff7b72;
+
+    box-shadow:0 0 8px rgba(255,123,114,.6);
+
+}
+
+@keyframes pulse{
+
+    0%{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+    50%{
+
+        transform:scale(1.35);
+
+        opacity:.65;
+
+    }
+
+    100%{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+/* ==========================================================
+   EMPTY CARD
+========================================================== */
+
+.empty-card{
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+
+    min-height:180px;
+
+}
+
+/* ==========================================================
+   FOOTER
+========================================================== */
+
+footer{
+
+    margin:60px 0 30px;
+
+    padding-top:20px;
+
+    border-top:1px solid var(--border);
+
+    text-align:center;
+
+    color:var(--muted);
+
+    font-size:12px;
+
+    letter-spacing:2px;
+
+    text-transform:uppercase;
+
+}
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#0b0f14;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#30363d;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#58a6ff;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width:900px){
+
+    .brand-row{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:10px;
+
+    }
+
+    h1{
+
+        font-size:34px;
+
+    }
+
+    .hero-title{
+
+        font-size:15px;
+
+    }
+
+    #tools-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .section-header{
+
+        flex-wrap:wrap;
+
+    }
+
+}
+
+@media (max-width:600px){
+
+    .container{
+
+        width:96%;
+
+    }
+
+    .hero{
+
+        padding:18px;
+
+    }
+
+    .tool-card{
+
+        padding:14px;
+
+    }
+
+    button{
+
+        width:100%;
+
+    }
+
+}
+

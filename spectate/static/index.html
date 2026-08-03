@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>J-BOT Spectate</title>
+
+    <link rel="stylesheet" href="style.css?v=3">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ========================================================= -->
+        <!-- HERO -->
+        <!-- ========================================================= -->
+
+        <header class="hero">
+
+            <div class="hero-left">
+
+                <div class="brand-row">
+
+                    <h1>J-BOT</h1>
+
+                    <span class="hero-badge">
+                        SPECTATE
+                    </span>
+
+                </div>
+
+                <p class="hero-title">
+                    Open-Source Autonomous Robotics Platform
+                </p>
+
+                <p class="intro">
+                    An open-source autonomous robotics platform built completely
+                    from scratch using
+                    <span class="highlight">Rust</span>,
+                    <span class="highlight">Raspberry Pi</span>,
+                    <span class="highlight">ESP32-S3</span>,
+                    <span class="highlight">ROS2</span>
+                    and modern robotics engineering.
+                </p>
+
+            </div>
+
+        </header>
+
+        <!-- ========================================================= -->
+        <!-- SYSTEM -->
+        <!-- ========================================================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>System</h2>
+
+                <span class="section-line"></span>
+
+            </div>
+
+            <div id="system" class="info-panel"></div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- REPOSITORY -->
+        <!-- ========================================================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>Repository</h2>
+
+                <span class="section-line"></span>
+
+            </div>
+
+            <div id="folders" class="info-panel"></div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TOOLS -->
+        <!-- ========================================================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>Tools</h2>
+
+                <span class="section-line"></span>
+
+                <button id="refresh-tools">
+                    Refresh
+                </button>
+
+            </div>
+
+            <div id="tools-grid"></div>
+
+        </section>
+
+    </div>
+
+    <footer>
+
+        <span>J-BOT</span>
+
+        <span>•</span>
+
+        <span>Built with Rust</span>
+
+        <span>•</span>
+
+        <span>Spectate Dashboard</span>
+
+    </footer>
+
+    <script src="app.js?v=3"></script>
+
+</body>
+
+</html>
