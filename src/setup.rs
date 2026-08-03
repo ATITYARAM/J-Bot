@@ -1,330 +1,120 @@
-use std::{
-    fs,
-    path::Path,
-    process::Command,
-};
+use std::process::{Command, Stdio};
 
 pub fn run() {
     println!("=========================");
-    println!("J-BOT Environment");
+    println!("ROS 2 Setup");
     println!("=========================\n");
 
-    create_directories();
+    apt_update();
 
-    check_os();
-    check_rust();
-    check_path();
-    check_esp();
-    check_xtensa();
-    setup_environment();
-    create_symlinks();
-    check_tools();
+    install_prerequisites();
+
+    add_repository();
+
+    apt_update();
+
+    install_ros_base();
+
+    install_ros_tools();
+
     println!();
-    verify_board();
-    
-    println!();
-
-    if !command_exists("xtensa-esp32s3-elf-gcc") {
-        println!("Restart the terminal or run:");
-        println!("    source ~/.bashrc");
-    }
+    println!("ROS Base Installed");
 }
 
-fn create_directories() {
-    use std::fs;
-
-    let dirs = [
-        "tools",
-        "tools/bin",
-    ];
-
-    for dir in dirs {
-        match fs::create_dir_all(dir) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!("Failed to create {} : {}", dir, e);
-            }
-        }
-    }
+fn apt_update() {
+    let _ = Command::new("sudo")
+        .args(["apt", "update"])
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status();
 }
 
-fn check_os() {
-    let os = fs::read_to_string("/etc/os-release").unwrap_or_default();
+fn install_prerequisites() {
+    println!("Installing prerequisites...");
 
-    if os.contains("Ubuntu") {
-        println!("✓ Ubuntu");
-    } else {
-        println!("✗ Unsupported OS");
-    }
-}
-
-fn check_rust() {
-    check("cargo");
-    version("cargo", "--version");
-    version("rustc", "--version");
-    version("rustup", "--version");
-
-    check_path();
-}
-
-fn check_esp() {
-    ensure_tool(
-        "espup",
-        &["cargo", "install", "espup"],
-    );
-
-    ensure_tool(
-    "espflash",
-    &[
-        "cargo",
-        "install",
-        "espflash",
-        "--version",
-        "3.3.0",
-        "--force",
-    ],
-);
-
-    ensure_tool(
-        "cargo-generate",
-        &["cargo", "install", "cargo-generate"],
-    );
-
-    ensure_tool(
-        "ldproxy",
-        &["cargo", "install", "ldproxy"],
-    );
-
-    ensure_tool(
-        "esp-generate",
-        &[
-            "cargo",
+    let _ = Command::new("sudo")
+        .args([
+            "apt",
             "install",
-            "esp-generate",
-        ],
-    );
-}
-
-fn check_xtensa() {
-    if command_exists("xtensa-esp32s3-elf-gcc") {
-        println!("✓ xtensa-esp32s3-elf-gcc");
-        return;
-    }
-
-    println!("Installing Xtensa Toolchain...");
-
-    let _ = Command::new("espup")
-        .arg("install")
+            "-y",
+            "curl",
+            "gnupg",
+            "lsb-release",
+            "software-properties-common",
+            "locales",
+        ])
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
         .status();
 
-    if command_exists("xtensa-esp32s3-elf-gcc") {
-        println!("✓ xtensa-esp32s3-elf-gcc");
-    } else {
-        println!("✗ xtensa-esp32s3-elf-gcc");
-    }
-}
-
-fn find_xtensa(dir: &str) -> bool {
-    fn walk(path: &Path) -> bool {
-        if let Ok(entries) = std::fs::read_dir(path) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-
-                if path.is_dir() {
-                    if walk(&path) {
-                        return true;
-                    }
-                } else if let Some(name) = path.file_name() {
-                    if name == "xtensa-esp32s3-elf-gcc" {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        false
-    }
-
-    walk(Path::new(dir))
-}
-
-fn setup_environment() {
-    use std::fs::{read_to_string, OpenOptions};
-    use std::io::Write;
-
-    let home = std::env::var("HOME").unwrap();
-    let bashrc = format!("{home}/.bashrc");
-
-    let cargo_line = r#"export PATH="$HOME/.cargo/bin:$PATH""#;
-    let esp_line = r#"if [ -f "$HOME/export-esp.sh" ]; then . "$HOME/export-esp.sh"; fi"#;
-
-    let current = read_to_string(&bashrc).unwrap_or_default();
-
-    let mut file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(&bashrc)
-        .unwrap();
-
-    if !current.contains(cargo_line) {
-        writeln!(file).unwrap();
-        writeln!(file, "# J-BOT").unwrap();
-        writeln!(file, "{cargo_line}").unwrap();
-    }
-
-    if !current.contains("export-esp.sh") {
-        writeln!(file, "{esp_line}").unwrap();
-    }
-
-    println!("✓ ~/.bashrc updated");
-}
-
-#[cfg(unix)]
-fn create_symlinks() {
-    use std::{
-        fs,
-        os::unix::fs::symlink,
-    };
-
-    let home = std::env::var("HOME").unwrap();
-
-    let cargo_bin = format!("{home}/.cargo/bin");
-
-    let tools = [
-        "cargo",
-        "cargo-generate",
-        "espflash",
-        "espup",
-        "esp-generate",
-        "ldproxy",
-        "rustc",
-        "rustup",
-    ];
-
-    for tool in tools {
-
-        let src = format!("{cargo_bin}/{tool}");
-
-        let dst = format!("tools/bin/{tool}");
-
-        if !Path::new(&src).exists() {
-            continue;
-        }
-
-        // Remove old file/symlink if it exists
-        let _ = fs::remove_file(&dst);
-
-        // Create fresh symlink
-        let _ = symlink(&src, &dst);
-    }
-
-    println!("✓ tools/bin updated");
-}
-fn check_tools() {
-    check_dir("tools");
-    check_dir("tools/bin");
-}
-
-fn check_dir(path: &str) {
-    if Path::new(path).exists() {
-        println!("✓ {}", path);
-    } else {
-        println!("✗ {}", path);
-    }
-}
-
-fn check(cmd: &str) {
-    let ok = Command::new("which")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false);
-
-    if ok {
-        println!("✓ {}", cmd);
-    } else {
-        println!("✗ {}", cmd);
-    }
-}
-
-fn command_exists(cmd: &str) -> bool {
-    Command::new("which")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-}
-
-fn ensure_tool(tool: &str, install: &[&str]) {
-    if command_exists(tool) {
-        println!("✓ {}", tool);
-        return;
-    }
-
-    println!("Installing {}...", tool);
-
-    let status = Command::new(install[0])
-        .args(&install[1..])
+    let _ = Command::new("sudo")
+        .args(["locale-gen", "en_US.UTF-8"])
         .status();
 
-    match status {
-        Ok(s) if s.success() => {
-            println!("✓ {}", tool);
-        }
-        _ => {
-            println!("✗ {}", tool);
-        }
-    }
+    let _ = Command::new("sudo")
+        .args([
+            "update-locale",
+            "LANG=en_US.UTF-8",
+            "LC_ALL=en_US.UTF-8",
+        ])
+        .status();
+
+    println!("✓ Prerequisites");
 }
 
-fn verify_board() {
-    let entries = fs::read_dir("/dev").unwrap();
+fn add_repository() {
+    println!("Adding ROS Repository...");
 
-    let mut found = false;
+    let cmd = r#"
+curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key |
+sudo gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg
 
-    for entry in entries.flatten() {
-        let name = entry.file_name();
-        let name = name.to_string_lossy();
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" |
+sudo tee /etc/apt/sources.list.d/ros2.list >/dev/null
+"#;
 
-        if name.starts_with("ttyACM") || name.starts_with("ttyUSB") {
-            println!("✓ ESP Device : /dev/{}", name);
-            found = true;
-        }
-    }
+    let _ = Command::new("bash")
+        .arg("-c")
+        .arg(cmd)
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status();
 
-    if !found {
-        println!("✗ No ESP Board Connected");
-    }
+    println!("✓ Repository");
 }
 
-fn check_path() {
-    let home = std::env::var("HOME").unwrap();
+fn install_ros_base() {
+    println!("Installing ROS Base...");
 
-    let cargo_bin = format!("{home}/.cargo/bin");
+    let _ = Command::new("sudo")
+        .args([
+            "apt",
+            "install",
+            "-y",
+            "ros-jazzy-ros-base",
+        ])
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status();
 
-    let path = std::env::var("PATH").unwrap_or_default();
-
-    if path.contains(&cargo_bin) {
-        println!("✓ PATH (.cargo/bin)");
-    } else {
-        println!("✗ PATH (.cargo/bin)");
-    }
-
-    if command_exists("xtensa-esp32s3-elf-gcc") {
-        println!("✓ Xtensa PATH");
-    } else {
-        println!("✗ Xtensa PATH");
-    }
+    println!("✓ ros-base");
 }
 
-fn version(cmd: &str, arg: &str) {
-    if let Ok(out) = Command::new(cmd).arg(arg).output() {
-        if out.status.success() {
-            let text = String::from_utf8_lossy(&out.stdout);
-            println!("✓ {}", text.trim());
-            return;
-        }
-    }
+fn install_ros_tools() {
+    println!("Installing ROS tools...");
 
-    println!("✗ {}", cmd);
+    let _ = Command::new("sudo")
+        .args([
+            "apt",
+            "install",
+            "-y",
+            "python3-colcon-common-extensions",
+            "python3-vcstool",
+            "python3-rosdep",
+        ])
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status();
+
+    println!("✓ ROS tools");
 }
