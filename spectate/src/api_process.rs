@@ -1,12 +1,12 @@
 use std::sync::OnceLock;
 
 use axum::{
-    extract::Path,
+    extract::{Json as JsonBody, Path},
     routing::{get, post},
     Json,
     Router,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::process::ProcessManager;
 
@@ -17,61 +17,95 @@ fn manager() -> &'static ProcessManager {
 }
 
 #[derive(Serialize)]
-struct ProcessInfo {
-    name: String,
-    running: bool,
+pub struct ProcessInfo {
+    pub id: String,
+    pub title: String,
+    pub command: String,
+    pub interactive: bool,
+    pub running: bool,
+}
+
+#[derive(Deserialize)]
+pub struct InputRequest {
+    pub input: String,
 }
 
 pub fn router() -> Router {
     Router::new()
-        .route("/api/process", get(list_processes))
-        .route("/api/process/{name}/start", post(start_process))
-        .route("/api/process/{name}/stop", post(stop_process))
-        .route("/api/process/{name}/clear", post(clear_output))
-        .route("/api/process/{name}/output", get(process_output))
+        .route("/api/process", get(list))
+        .route("/api/process/{id}/start", post(start))
+        .route("/api/process/{id}/stop", post(stop))
+        .route("/api/process/{id}/clear", post(clear))
+        .route("/api/process/{id}/output", get(output))
+        .route("/api/process/{id}/input", post(input))
 }
 
-async fn list_processes() -> Json<Vec<ProcessInfo>> {
+async fn list() -> Json<Vec<ProcessInfo>> {
+
     let mgr = manager();
 
-    Json(vec![
-        ProcessInfo {
-            name: "teleop".to_string(),
-            running: mgr.running("teleop"),
-        },
-        ProcessInfo {
-            name: "build".to_string(),
-            running: mgr.running("build"),
-        },
-        ProcessInfo {
-            name: "s3".to_string(),
-            running: mgr.running("s3"),
-        },
-    ])
+    let mut processes = Vec::new();
+
+    for process in ProcessManager::definitions() {
+
+        processes.push(ProcessInfo {
+
+            id: process.id.to_string(),
+
+            title: process.title.to_string(),
+
+            command: process.command.to_string(),
+
+            interactive: process.interactive,
+
+            running: mgr.running(process.id),
+
+        });
+
+    }
+
+    Json(processes)
 }
 
-async fn start_process(
-    Path(name): Path<String>,
+async fn start(
+    Path(id): Path<String>,
 ) -> Json<bool> {
-    Json(manager().start(&name).is_ok())
+
+    Json(manager().start(&id).is_ok())
+
 }
 
-async fn stop_process(
-    Path(name): Path<String>,
+async fn stop(
+    Path(id): Path<String>,
 ) -> Json<bool> {
-    Json(manager().stop(&name).is_ok())
+
+    Json(manager().stop(&id).is_ok())
+
 }
 
-async fn clear_output(
-    Path(name): Path<String>,
+async fn clear(
+    Path(id): Path<String>,
 ) -> Json<bool> {
-    manager().clear(&name);
+
+    manager().clear(&id);
 
     Json(true)
+
 }
 
-async fn process_output(
-    Path(name): Path<String>,
+async fn output(
+    Path(id): Path<String>,
 ) -> Json<Vec<String>> {
-    Json(manager().output(&name))
+
+    Json(manager().output(&id))
+
+}
+
+async fn input(
+    Path(id): Path<String>,
+    JsonBody(req): JsonBody<InputRequest>,
+) -> Json<bool> {
+
+    Json(manager().send_input(&id, &req.input).is_ok())
+
 }
