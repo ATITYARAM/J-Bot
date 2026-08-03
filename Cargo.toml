@@ -13,4 +13,8 @@ path = "src/main.rs"
 name = "spec"
 path = "src/spec.rs"
 
+[[bin]]
+name = "s3"
+path = "src/s3.rs"
+
 [dependencies]

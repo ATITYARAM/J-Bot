@@ -74,9 +74,16 @@ fn check_esp() {
     );
 
     ensure_tool(
+    "espflash",
+    &[
+        "cargo",
+        "install",
         "espflash",
-        &["cargo", "install", "espflash"],
-    );
+        "--version",
+        "3.3.0",
+        "--force",
+    ],
+);
 
     ensure_tool(
         "cargo-generate",

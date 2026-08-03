@@ -1,0 +1,30 @@
+[package]
+edition      = "2024"
+name         = "s3-pico"
+rust-version = "1.88"
+version      = "0.1.0"
+
+[[bin]]
+name = "s3-pico"
+path = "./src/main.rs"
+
+[dependencies]
+esp-hal = { version = "0.23", features = ["esp32s3", "unstable"] }
+esp-backtrace = { version = "0.14", features = ["esp32s3", "panic-handler", "exception-handler", "println"] }
+esp-println = { version = "0.12", default-features = false, features = ["esp32s3", "uart"] }
+
+embedded-hal = "1.0"
+
+fugit = "0.3"
+
+# For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html
+[profile.dev]
+# The default debug profile is too slow and too big for resource-constrained devices.
+# Always build with some optimizations enabled.
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1     # LLVM can perform better optimizations using a single thread
+debug         = 2     # prefer slower builds but better debugging experience
+lto           = 'fat'
+opt-level     = 's'
