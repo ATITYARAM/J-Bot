@@ -19,10 +19,15 @@ pub fn run() {
     setup_environment();
     create_symlinks();
     check_tools();
-
+    println!();
+    verify_board();
+    
     println!();
 
-    verify_board();
+    if !command_exists("xtensa-esp32s3-elf-gcc") {
+        println!("Restart the terminal or run:");
+        println!("    source ~/.bashrc");
+    }
 }
 
 fn create_directories() {
@@ -94,11 +99,7 @@ fn check_esp() {
 }
 
 fn check_xtensa() {
-    let home = std::env::var("HOME").unwrap();
-
-    let root = format!("{home}/.rustup/toolchains/esp");
-
-    if find_xtensa(&root) {
+    if command_exists("xtensa-esp32s3-elf-gcc") {
         println!("✓ xtensa-esp32s3-elf-gcc");
         return;
     }
@@ -109,7 +110,7 @@ fn check_xtensa() {
         .arg("install")
         .status();
 
-    if find_xtensa(&root) {
+    if command_exists("xtensa-esp32s3-elf-gcc") {
         println!("✓ xtensa-esp32s3-elf-gcc");
     } else {
         println!("✗ xtensa-esp32s3-elf-gcc");
@@ -145,17 +146,12 @@ fn setup_environment() {
     use std::io::Write;
 
     let home = std::env::var("HOME").unwrap();
-
     let bashrc = format!("{home}/.bashrc");
 
-    let line = format!(". {home}/export-esp.sh");
+    let cargo_line = r#"export PATH="$HOME/.cargo/bin:$PATH""#;
+    let esp_line = r#"if [ -f "$HOME/export-esp.sh" ]; then . "$HOME/export-esp.sh"; fi"#;
 
     let current = read_to_string(&bashrc).unwrap_or_default();
-
-    if current.contains(&line) {
-        println!("✓ export-esp.sh");
-        return;
-    }
 
     let mut file = OpenOptions::new()
         .append(true)
@@ -163,11 +159,17 @@ fn setup_environment() {
         .open(&bashrc)
         .unwrap();
 
-    writeln!(file).unwrap();
-    writeln!(file, "# J-BOT").unwrap();
-    writeln!(file, "{}", line).unwrap();
+    if !current.contains(cargo_line) {
+        writeln!(file).unwrap();
+        writeln!(file, "# J-BOT").unwrap();
+        writeln!(file, "{cargo_line}").unwrap();
+    }
 
-    println!("✓ export-esp.sh");
+    if !current.contains("export-esp.sh") {
+        writeln!(file, "{esp_line}").unwrap();
+    }
+
+    println!("✓ ~/.bashrc updated");
 }
 
 #[cfg(unix)]
@@ -296,9 +298,15 @@ fn check_path() {
     let path = std::env::var("PATH").unwrap_or_default();
 
     if path.contains(&cargo_bin) {
-        println!("✓ PATH");
+        println!("✓ PATH (.cargo/bin)");
     } else {
-        println!("✗ PATH");
+        println!("✗ PATH (.cargo/bin)");
+    }
+
+    if command_exists("xtensa-esp32s3-elf-gcc") {
+        println!("✓ Xtensa PATH");
+    } else {
+        println!("✗ Xtensa PATH");
     }
 }
 
