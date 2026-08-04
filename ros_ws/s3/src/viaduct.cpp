@@ -2,8 +2,14 @@
 #include <unistd.h>
 #include <termios.h>
 
+#include <filesystem>
+#include <fstream>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+
+namespace fs = std::filesystem;
 
 class Viaduct : public rclcpp::Node
 {
@@ -11,38 +17,46 @@ public:
     Viaduct()
         : Node("viaduct")
     {
-        serial_ = open("/dev/ttyACM0", O_RDWR | O_NOCTTY);
+        std::string port = find_esp_port();
+
+        if (port.empty())
+        {
+            RCLCPP_ERROR(get_logger(), "No ESP32 / ESP32-S3 Found");
+            return;
+        }
+
+        serial_ = open(port.c_str(), O_RDWR | O_NOCTTY);
 
         if (serial_ < 0)
         {
-            RCLCPP_ERROR(get_logger(), "Cannot open /dev/ttyACM0");
+            RCLCPP_ERROR(get_logger(), "Cannot open %s", port.c_str());
+            return;
         }
-        else
-        {
-            struct termios tty {};
 
-            tcgetattr(serial_, &tty);
+        struct termios tty{};
 
-            cfsetispeed(&tty, B115200);
-            cfsetospeed(&tty, B115200);
+        tcgetattr(serial_, &tty);
 
-            tty.c_cflag |= (CLOCAL | CREAD);
-            tty.c_cflag &= ~CSIZE;
-            tty.c_cflag |= CS8;
-            tty.c_cflag &= ~PARENB;
-            tty.c_cflag &= ~CSTOPB;
-            tty.c_cflag &= ~CRTSCTS;
+        cfsetispeed(&tty, B115200);
+        cfsetospeed(&tty, B115200);
 
-            tty.c_lflag = 0;
-            tty.c_iflag = 0;
-            tty.c_oflag = 0;
+        tty.c_cflag |= (CLOCAL | CREAD);
+        tty.c_cflag &= ~CSIZE;
+        tty.c_cflag |= CS8;
+        tty.c_cflag &= ~PARENB;
+        tty.c_cflag &= ~CSTOPB;
+        tty.c_cflag &= ~CRTSCTS;
 
-            tcsetattr(serial_, TCSANOW, &tty);
+        tty.c_iflag = 0;
+        tty.c_oflag = 0;
+        tty.c_lflag = 0;
 
-            RCLCPP_INFO(
-                get_logger(),
-                "Connected to /dev/ttyACM0");
-        }
+        tcsetattr(serial_, TCSANOW, &tty);
+
+        RCLCPP_INFO(
+            get_logger(),
+            "Connected -> %s",
+            port.c_str());
 
         subscription_ =
             create_subscription<std_msgs::msg::String>(
@@ -57,12 +71,57 @@ public:
     ~Viaduct()
     {
         if (serial_ >= 0)
-        {
             close(serial_);
-        }
     }
 
 private:
+
+    std::string find_esp_port()
+    {
+        const std::string root = "/sys/class/tty";
+
+        for (const auto &entry : fs::directory_iterator(root))
+        {
+            std::string tty = entry.path().filename();
+
+            if (tty.rfind("ttyACM", 0) != 0 &&
+                tty.rfind("ttyUSB", 0) != 0)
+                continue;
+
+            fs::path device = fs::canonical(entry.path() / "device");
+
+            fs::path usb = device;
+
+            while (!usb.empty())
+            {
+                if (fs::exists(usb / "idVendor") &&
+                    fs::exists(usb / "idProduct"))
+                {
+                    std::ifstream vendor(usb / "idVendor");
+                    std::ifstream product(usb / "idProduct");
+
+                    std::string vid;
+                    std::string pid;
+
+                    vendor >> vid;
+                    product >> pid;
+
+                    // Espressif VID
+                    if (vid == "303a")
+                    {
+                        return "/dev/" + tty;
+                    }
+
+                    break;
+                }
+
+                usb = usb.parent_path();
+            }
+        }
+
+        return "";
+    }
+
     void callback(const std_msgs::msg::String::SharedPtr msg)
     {
         RCLCPP_INFO(
