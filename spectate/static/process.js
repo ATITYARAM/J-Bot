@@ -1,9 +1,10 @@
 const container = document.getElementById("process-container");
 
 let processes = [];
+let refreshTimer = null;
 
 /* ==========================================================
-   LOAD PROCESS DEFINITIONS
+   LOAD
 ========================================================== */
 
 async function loadProcesses() {
@@ -48,9 +49,9 @@ function buildUI() {
 
         <span
             id="${proc.id}-status"
-            class="status ${proc.running ? "running" : "stopped"}">
+            class="status ${proc.running ? "running":"stopped"}">
 
-            ${proc.running ? "RUNNING" : "STOPPED"}
+            ${proc.running ? "RUNNING":"STOPPED"}
 
         </span>
 
@@ -79,13 +80,12 @@ ${proc.interactive ? `
 
 <div class="input-bar">
 
-    <input
-        id="${proc.id}-input"
-        class="live-input"
-        type="text"
-        autocomplete="off"
-        spellcheck="false"
-        placeholder="Click here then press I J K L Space Q">
+<input
+    id="${proc.id}-input"
+    class="live-input"
+    autocomplete="off"
+    spellcheck="false"
+    placeholder="I J K L SPACE Q">
 
 </div>
 
@@ -94,8 +94,8 @@ ${proc.interactive ? `
 `;
 
         container.appendChild(card);
-        
-        if(proc.interactive){
+
+        if (proc.interactive) {
 
             bindLiveInput(proc.id);
 
@@ -109,11 +109,14 @@ ${proc.interactive ? `
    START
 ========================================================== */
 
-async function startProcess(id) {
+async function startProcess(id){
 
-    await fetch(`/api/process/${id}/start`, {
-        method:"POST"
-    });
+    await fetch(
+        `/api/process/${id}/start`,
+        {
+            method:"POST"
+        }
+    );
 
     await refresh();
 
@@ -123,11 +126,54 @@ async function startProcess(id) {
    STOP
 ========================================================== */
 
-async function stopProcess(id) {
+async function stopProcess(id){
 
-    await fetch(`/api/process/${id}/stop`, {
-        method:"POST"
-    });
+    await fetch(
+        `/api/process/${id}/stop`,
+        {
+            method:"POST"
+        }
+    );
+
+    await refresh();
+
+}
+
+/* ==========================================================
+   STOP ALL
+========================================================== */
+
+async function stopAll(){
+
+    if(!confirm("Stop every running process?"))
+        return;
+
+    await fetch(
+        "/api/process/stop-all",
+        {
+            method:"POST"
+        }
+    );
+
+    await refresh();
+
+}
+
+/* ==========================================================
+   DISCONNECT
+========================================================== */
+
+async function disconnectAll(){
+
+    if(!confirm("Disconnect Spectate?"))
+        return;
+
+    await fetch(
+        "/api/process/disconnect-all",
+        {
+            method:"POST"
+        }
+    );
 
     await refresh();
 
@@ -137,11 +183,14 @@ async function stopProcess(id) {
    CLEAR
 ========================================================== */
 
-async function clearProcess(id) {
+async function clearProcess(id){
 
-    await fetch(`/api/process/${id}/clear`, {
-        method:"POST"
-    });
+    await fetch(
+        `/api/process/${id}/clear`,
+        {
+            method:"POST"
+        }
+    );
 
     document.getElementById(
         `${id}-output`
@@ -161,16 +210,16 @@ function bindLiveInput(id){
     if(!input)
         return;
 
-    input.addEventListener("keydown", async (e)=>{
+    input.addEventListener("keydown",async(e)=>{
 
         e.preventDefault();
 
-        let key = e.key.toLowerCase();
+        let key=e.key.toLowerCase();
 
-        if(key === " ")
-            key = " ";
+        if(key===" ")
+            key=" ";
 
-        const allowed = [
+        const allowed=[
             "i",
             "j",
             "k",
@@ -182,19 +231,20 @@ function bindLiveInput(id){
         if(!allowed.includes(key))
             return;
 
-        await fetch(`/api/process/${id}/input`,{
+        await fetch(
+            `/api/process/${id}/input`,
+            {
+                method:"POST",
 
-            method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
 
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify({
-                input:key
-            })
-
-        });
+                body:JSON.stringify({
+                    input:key
+                })
+            }
+        );
 
     });
 
@@ -206,25 +256,29 @@ function bindLiveInput(id){
 
 async function updateOutput(id){
 
-    const response=await fetch(
-        `/api/process/${id}/output`,
-        {
-            cache:"no-store"
-        }
-    );
+    const response =
+        await fetch(
+            `/api/process/${id}/output`,
+            {
+                cache:"no-store"
+            }
+        );
 
-    const lines=await response.json();
+    const lines =
+        await response.json();
 
-    const terminal=document.getElementById(
-        `${id}-output`
-    );
+    const terminal =
+        document.getElementById(
+            `${id}-output`
+        );
 
     if(!terminal)
         return;
 
-    const text=lines.join("\n");
+    const text =
+        lines.join("\n");
 
-    if(terminal.textContent!==text){
+    if(text!==terminal.textContent){
 
         terminal.textContent=text;
 
@@ -241,33 +295,34 @@ async function updateOutput(id){
 
 async function updateStatus(){
 
-    const response=await fetch(
-        "/api/process",
-        {
-            cache:"no-store"
-        }
-    );
-
-    const latest=await response.json();
-
-    processes=latest;
-
-    for(const proc of latest){
-
-        const badge=document.getElementById(
-            `${proc.id}-status`
+    const response =
+        await fetch(
+            "/api/process",
+            {
+                cache:"no-store"
+            }
         );
+
+    processes =
+        await response.json();
+
+    for(const proc of processes){
+
+        const badge =
+            document.getElementById(
+                `${proc.id}-status`
+            );
 
         if(!badge)
             continue;
 
         badge.className=
-            `status ${proc.running ? "running":"stopped"}`;
+            `status ${proc.running?"running":"stopped"}`;
 
         badge.textContent=
             proc.running
-            ? "RUNNING"
-            : "STOPPED";
+                ? "RUNNING"
+                : "STOPPED";
 
     }
 
@@ -281,16 +336,53 @@ async function refresh(){
 
     await updateStatus();
 
-    for(const proc of processes){
+    await Promise.all(
 
-        await updateOutput(proc.id);
+        processes.map(p=>
+            updateOutput(p.id)
+        )
 
-    }
+    );
 
 }
 
 /* ==========================================================
-   INITIALIZE
+   AUTO REFRESH
+========================================================== */
+
+function startRefresh(){
+
+    if(refreshTimer)
+        clearInterval(refreshTimer);
+
+    refreshTimer =
+        setInterval(
+            refresh,
+            500
+        );
+
+}
+
+/* ==========================================================
+   HERO BUTTONS
+========================================================== */
+
+document
+.getElementById("stop-all")
+?.addEventListener(
+    "click",
+    stopAll
+);
+
+document
+.getElementById("disconnect-all")
+?.addEventListener(
+    "click",
+    disconnectAll
+);
+
+/* ==========================================================
+   INIT
 ========================================================== */
 
 (async()=>{
@@ -299,6 +391,6 @@ async function refresh(){
 
     await refresh();
 
-    setInterval(refresh,1000);
+    startRefresh();
 
 })();
