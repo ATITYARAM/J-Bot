@@ -47,6 +47,7 @@ pub fn run() {
 
 fn versions() {
     version("ros2", "--version");
+    version("rviz2", "--help");
     version("colcon", "--version");
     version("rosdep", "--version");
 }
@@ -246,6 +247,7 @@ fn install_tools() {
             "build-essential",
             "cmake",
             "git",
+            "ros-jazzy-rviz2",
         ],
     ) {
         println!("✓ ROS tools");
@@ -347,6 +349,7 @@ fn create_symlinks() {
 
 fn verify() {
     verify_tool("ros2", "--help");
+    verify_tool("rviz2", "--help");
     verify_tool("colcon", "--version");
     verify_tool("rosdep", "--version");
     verify_tool("vcs", "--help");
