@@ -235,6 +235,11 @@ fn install_ros(ros: &str) {
 fn install_tools() {
     println!("• Installing ROS tools");
 
+    let ros = ros_distro(&detect_ubuntu());
+
+    let rviz = format!("ros-{}-rviz2", ros);
+    let sensor_msgs = format!("ros-{}-sensor-msgs", ros);
+
     if execute(
         "sudo",
         &[
@@ -247,7 +252,8 @@ fn install_tools() {
             "build-essential",
             "cmake",
             "git",
-            "ros-jazzy-rviz2",
+            &rviz,
+            &sensor_msgs,
         ],
     ) {
         println!("✓ ROS tools");
@@ -255,7 +261,6 @@ fn install_tools() {
         println!("✗ ROS tools");
     }
 }
-
 fn init_rosdep() {
     println!("• rosdep");
 
