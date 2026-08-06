@@ -1,9 +1,10 @@
 #include <chrono>
-#include <vector>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "std_msgs/msg/int32.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
 using namespace std::chrono_literals;
@@ -23,6 +24,11 @@ public:
         scan_pub_ =
             create_publisher<sensor_msgs::msg::LaserScan>(
                 "/jbot/tilt/scan",
+                10);
+
+        snap_pub_ =
+            create_publisher<std_msgs::msg::String>(
+                "/jbot/tilt/snap",
                 10);
 
         scan_sub_ =
@@ -99,6 +105,22 @@ private:
         }
 
         scan_pub_->publish(front);
+
+        std_msgs::msg::String snap;
+
+        snap.data =
+            "000000000000000\n"
+            "000000000000000\n"
+            "000000000000000\n"
+            "000001110000000\n"
+            "000011111000000\n"
+            "000111111100000\n"
+            "000011111000000\n"
+            "000001110000000\n"
+            "000000000000000\n"
+            "000000000000000";
+
+        snap_pub_->publish(snap);
     }
 
     int angle_;
@@ -108,6 +130,9 @@ private:
 
     rclcpp::Publisher<
         sensor_msgs::msg::LaserScan>::SharedPtr scan_pub_;
+
+    rclcpp::Publisher<
+        std_msgs::msg::String>::SharedPtr snap_pub_;
 
     rclcpp::Subscription<
         sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
