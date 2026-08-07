@@ -2,6 +2,10 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <filesystem>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -17,12 +21,13 @@ class Tilt : public rclcpp::Node
 public:
     Tilt()
         : Node("tilt"),
-          angle_(75)
+          angle_(75),
+          serial_(-1)
     {
         angle_pub_ =
-            create_publisher<std_msgs::msg::Int32>(
-                "/jbot/tilt/angle",
-                10);
+	        create_publisher<std_msgs::msg::String>(
+	            "/jbot/tilt/angle",
+	            10);
 
         scan_pub_ =
             create_publisher<sensor_msgs::msg::LaserScan>(
@@ -44,39 +49,107 @@ public:
                     std::placeholders::_1));
 
         start_sub_ =
-    create_subscription<std_msgs::msg::Empty>(
-        "/jbot/tilt/start",
-        10,
-        std::bind(
-            &Tilt::start_callback,
-            this,
-            std::placeholders::_1));
+            create_subscription<std_msgs::msg::Empty>(
+                "/jbot/tilt/start",
+                10,
+                std::bind(
+                    &Tilt::start_callback,
+                    this,
+                    std::placeholders::_1));
+
+        //--------------------------------------------------
+        // Find ESP32 Serial Port
+        //--------------------------------------------------
+
+        for (int i = 0; i < 10; i++)
+        {
+            std::string port =
+                "/dev/ttyACM" + std::to_string(i);
+
+            serial_ =
+                open(
+                    port.c_str(),
+                    O_RDWR | O_NOCTTY | O_SYNC);
+
+            if (serial_ >= 0)
+            {
+                struct termios tty{};
+
+                if (tcgetattr(serial_, &tty) != 0)
+                {
+                    close(serial_);
+                    serial_ = -1;
+                    continue;
+                }
+
+                cfsetispeed(&tty, B115200);
+                cfsetospeed(&tty, B115200);
+
+                tty.c_cflag |= (CLOCAL | CREAD);
+                tty.c_cflag &= ~CSIZE;
+                tty.c_cflag |= CS8;
+                tty.c_cflag &= ~PARENB;
+                tty.c_cflag &= ~CSTOPB;
+                tty.c_cflag &= ~CRTSCTS;
+
+                tty.c_iflag = 0;
+                tty.c_oflag = 0;
+                tty.c_lflag = 0;
+
+                if (tcsetattr(serial_, TCSANOW, &tty) != 0)
+                {
+                    close(serial_);
+                    serial_ = -1;
+                    continue;
+                }
+
+                RCLCPP_INFO(
+                    get_logger(),
+                    "Connected to %s",
+                    port.c_str());
+
+                break;
+            }
+        }
+
+        if (serial_ < 0)
+        {
+            RCLCPP_WARN(
+                get_logger(),
+                "No /dev/ttyACM* device found");
+        }
+    }
+
+    ~Tilt()
+    {
+        if (serial_ >= 0)
+        {
+            close(serial_);
+        }
     }
 
 private:
     
     void start_callback(
-    const std_msgs::msg::Empty::SharedPtr)
-{
-    if (running_)
+        const std_msgs::msg::Empty::SharedPtr)
     {
-        return;
+        if (running_)
+        {
+            return;
+        }
+
+        running_ = true;
+
+        angle_ = 75;
+
+        RCLCPP_INFO(
+            get_logger(),
+            "Tilt Started");
     }
 
-    running_ = true;
-
-    angle_ = 75;
-
-    RCLCPP_INFO(
-        get_logger(),
-        "Tilt Started");
-}
-
     void scan_callback(
-    
         const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
-    
         if (!running_)
         {
             return;
@@ -198,11 +271,19 @@ private:
 
         snap_pub_->publish(snap);
         
-        std_msgs::msg::Int32 angle;
+        std_msgs::msg::String angle;
 
-        angle.data = angle_;
+        angle.data = "T:" + std::to_string(angle_);
 
         angle_pub_->publish(angle);
+
+        // Send over direct serial port to ESP32-S3
+        if (serial_ >= 0)
+        {
+            std::string tx = angle.data + "\n";
+            write(serial_, tx.c_str(), tx.size());
+            tcdrain(serial_);
+        }
 
         angle_++;
 
@@ -210,9 +291,17 @@ private:
         {
             angle_ = 90;
 
-            angle.data = 90;
+            angle.data = "T:90";
 
             angle_pub_->publish(angle);
+
+            // Send home position over serial port
+            if (serial_ >= 0)
+            {
+                std::string tx = angle.data + "\n";
+                write(serial_, tx.c_str(), tx.size());
+                tcdrain(serial_);
+            }
 
             running_ = false;
 
@@ -226,8 +315,10 @@ private:
 
     bool running_{false};
 
+    int serial_;
+
     rclcpp::Publisher<
-        std_msgs::msg::Int32>::SharedPtr angle_pub_;
+    std_msgs::msg::String>::SharedPtr angle_pub_;
 
     rclcpp::Publisher<
         sensor_msgs::msg::LaserScan>::SharedPtr scan_pub_;
